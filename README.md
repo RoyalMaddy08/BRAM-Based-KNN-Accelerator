@@ -1,32 +1,24 @@
 # BRAM-Based-KNN-Accelerator
 
-KNN-FPGA/
-│
-├── README.md
-│
-├── rtl/
-│   ├── knn_bram_top.v
-│   ├── bram_distance_top.v
-│   ├── euclidean.v
-│   ├── min_finder_pipe_16.v
-│   └── unpacker.v
-│
-├── tb/
-│   └── tb_knn_bram_top.v
-│
-├── memory/
-│   ├── dataset.mem
-│   └── dataset.mif
-│
-├── constraints/
-│   └── top.xdc
-│
-├── docs/
-│   ├── architecture.png
-│   ├── rtl_schematic.png
-│   ├── timing_report.png
-│   ├── waveform.png
-│   └── device_view.png
-│
-└── vivado/
-    └── create_project.tcl
+## Features
+- BRAM-based dataset storage
+- 4D Euclidean distance computation
+- Pipelined minimum finder
+- Fully synthesizable Verilog
+- Artix-7 compatible
+
+## Results
+- WNS: +3.628 ns
+- TNS: 0 ns
+- Failing Endpoints: 0
+
+## Dataset
+16 training vectors stored in BRAM.
+
+## Simulation
+Run:
+tb_knn_bram_top.v
+
+## FPGA
+Target Device:
+xc7a100tcsg324-1
