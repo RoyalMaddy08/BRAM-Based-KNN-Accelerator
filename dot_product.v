@@ -68,7 +68,7 @@ begin
 end
 
 //
-// Stage 3 : Final Add
+// Stage 3: Final Add
 //
 
 always @(posedge clk)
