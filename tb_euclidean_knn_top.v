@@ -21,7 +21,12 @@
 
 module tb_euclidean_knn_top;
 
+//====================================================
+// Ports
+//====================================================
 reg clk;
+reg reset;
+reg start;
 
 reg [7:0] x0;
 reg [7:0] x1;
@@ -29,63 +34,108 @@ reg [7:0] x2;
 reg [7:0] x3;
 
 wire done;
-wire [3:0] nearest_neighbor_index;
+wire [6:0]  nearest_neighbor_index;
 wire [17:0] minimum_distance;
 
-euclidean_knn_top uut(
+//====================================================
+// Performance Counters
+//====================================================
+integer cycle_count;
+integer query_number;
 
-    .clk(clk),
-
+//====================================================
+// DUT
+//====================================================
+euclidean_knn_top uut (
+    .clk   (clk),
+    .reset (reset),
+    .start (start),
     .x0(x0),
     .x1(x1),
     .x2(x2),
     .x3(x3),
-
-    .done(done),
-
+    .done                  (done),
     .nearest_neighbor_index(nearest_neighbor_index),
-
-    .minimum_distance(minimum_distance)
-
+    .minimum_distance      (minimum_distance)
 );
 
+//====================================================
+// Clock Generation  (10 ns period)
+//====================================================
 always #5 clk = ~clk;
+
+//====================================================
+// Cycle Counter - counts only while not done
+//====================================================
+always @(posedge clk)
+begin
+    if (!done)
+        cycle_count = cycle_count + 1;
+end
+
+//====================================================
+// run_query Task
+//====================================================
+task run_query;
+    input [7:0] a, b, c, d;
+    begin
+        //-- Set inputs ---------------------------------
+        x0 = a;
+        x1 = b;
+        x2 = c;
+        x3 = d;
+
+        //-- One-clock start pulse ----------------------
+        @(posedge clk);
+        start <= 1'b1;
+
+        @(posedge clk);
+        start <= 1'b0;
+
+        //-- Wait for accelerator to finish -------------
+        wait (done);
+        #1;
+
+        //-- Per-query report ---------------------------
+        $display("=========================================");
+        $display("EUCLIDEAN SEARCH COMPLETED");
+        $display("=========================================");
+        $display("Query Vector         = (%0d,%0d,%0d,%0d)", a, b, c, d);
+        $display("Nearest Window Index = %0d", nearest_neighbor_index);
+        $display("Minimum Distance     = %0d", minimum_distance);
+        $display("=========================================");
+
+        query_number = query_number + 1;
+
+        //-- Reset counter for next query ---------------
+        cycle_count = 0;
+
+        #10;
+    end
+endtask
 
 initial
 begin
+    //-- Initialise ------------------------------------
+    clk          = 0;
+    reset        = 1;
+    start        = 0;
+    cycle_count  = 0;
+    query_number = 1;
 
-    clk = 0;
-
-    //-----------------------------------
-    // Query Vector
-    //-----------------------------------
-
-    x0 = 8'd10;
-    x1 = 8'd10;
-    x2 = 8'd10;
-    x3 = 8'd11;
-
-    //-----------------------------------
-    // Wait for search completion
-    //-----------------------------------
-
-    wait(done);
+    x0 = 0;
+    x1 = 0;
+    x2 = 0;
+    x3 = 0;
 
     #20;
+    reset = 0;
 
-    $display("====================================");
-    $display("EUCLIDEAN SEARCH COMPLETED");
-    $display("Query Vector         = (%0d,%0d,%0d,%0d)",
-             x0,x1,x2,x3);
-    $display("Nearest Neighbor IDX = %0d",
-             nearest_neighbor_index);
-    $display("Minimum Distance     = %0d",
-             minimum_distance);
-    $display("====================================");
+    //-- Stimulus --------------------------------------
+    run_query(0,0,0,0);
 
     #20;
     $finish;
-
 end
 
 endmodule
